@@ -85,16 +85,35 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
  
-entity thunderbird_fsm is 
---  port(
-	
---  );
+entity thunderbird_fsm is
+    port (
+        i_clk, i_reset  : in    std_logic;
+        i_left, i_right : in    std_logic;
+
+        o_lights_L      : out   std_logic_vector(2 downto 0);
+        o_lights_R      : out   std_logic_vector(2 downto 0)
+    );
 end thunderbird_fsm;
 
 architecture thunderbird_fsm_arch of thunderbird_fsm is 
 
 -- CONSTANTS ------------------------------------------------------------------
-  
+  -----------------------
+--| One-Hot State Encoding key
+--| --------------------
+--| State | Encoding
+--| --------------------
+--| OFF   | 10000000
+--| ON    | 01000000
+--| R1    | 00100000
+--| R2    | 00010000
+--| R3    | 00001000
+--| L1    | 00000100
+--| L2    | 00000010
+--| L3    | 0-000001
+--| --------------------
+signal state      :std_logic_vector(7 downto 0);
+signal next_state :std_logic_vector(7 downto 0);
 begin
 
 	-- CONCURRENT STATEMENTS --------------------------------------------------------	
@@ -102,7 +121,88 @@ begin
     ---------------------------------------------------------------------------------
 	
 	-- PROCESSES --------------------------------------------------------------------
-    
+    process(i_clk)
+    begin
+        if rising_edge(i_clk) then
+            if i_reset = '1' then
+                state <= "10000000"; --off
+            else
+                state <= next_state;
+            end if;
+        end if;
+    end process;
+process(state,i_left,i_right)
+begin
+case state is
+    -- off
+    when "10000000" =>
+        if(i_left='1' and i_right='1') then
+            next_state <= "01000000"; --on
+        elsif(i_left='1') then
+            next_state <= "00000100"; --L1
+            
+        elsif(i_right='1') then
+            next_state <= "00100000"; --    L2  
+        else
+            next_state <= "10000000"; -- stay off
+        end if;
+        --hazard light
+    when "01000000" => 
+        next_state <= "10000000";
+      -- right 
+    when "00100000" =>
+        next_state <= "00010000";
+    when "00010000" =>
+        next_state <= "00001000";
+    when "00001000" =>
+        next_state <= "10000000";
+    -- left   
+    when "00000100" =>
+        next_state <= "00000010";
+    when "00000010" =>
+        next_state <= "00000001";
+    when "00000001" =>
+        next_state <= "10000000";
+    -- other
+    when others =>
+        next_state <= "10000000";
+end case;
+end process;
+--(Moore machine)
+process(state)
+begin
+case state is
+    when "10000000" => --off
+        o_lights_L <= "000";
+        o_lights_R <= "000";
+    when "01000000" => -- hazard
+        o_lights_L <= "111";
+        o_lights_R <= "111";
+    when "00000100" => -- l1
+        o_lights_L <= "001";
+        o_lights_R <= "000";
+        
+    when "00000010" => --l2
+        o_lights_L <= "011";
+        o_lights_R <= "000";
+        
+    when "00000001" => --l3
+        o_lights_L <= "111";
+        o_lights_R <= "000";
+    when "00100000" => --r1
+        o_lights_L <= "000";
+        o_lights_R <= "001";
+    when "00010000" => --r2
+        o_lights_L <= "000";
+        o_lights_R <= "011";
+    when "00001000" =>  --r3
+        o_lights_L <= "000";
+        o_lights_R <= "111";
+ end case;
+ end process;
+      
+            
+            
 	-----------------------------------------------------					   
 				  
 end thunderbird_fsm_arch;

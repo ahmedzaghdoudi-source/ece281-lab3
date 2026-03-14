@@ -88,6 +88,7 @@ begin
 				else
 					f_count <= f_count + 1;
 				end if;
+				
 			end if;
 		end if;
 	end process countClock_proc;

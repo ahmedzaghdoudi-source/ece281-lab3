@@ -82,20 +82,58 @@ entity top_basys3 is
 		--btnD	:	in	std_logic;	
 	);
 end top_basys3;
-
 architecture top_basys3_arch of top_basys3 is 
   
-	-- declare components
+	-- declare components  
+component thunderbird_fsm
+    port(
+        i_clk, i_reset  : in    std_logic;
+        i_left, i_right : in    std_logic;
 
-  
+        o_lights_L      : out   std_logic_vector(2 downto 0);
+        o_lights_R      : out   std_logic_vector(2 downto 0)
+    );
+end component;
+component clock_divider
+    generic( 
+        k_DIV : natural :=1
+    );
+    port(
+         i_clk    : in std_logic;
+         i_reset  : in std_logic;
+         o_clk    : out std_logic
+    );
+    
+    
+end component;
+signal slow_clk : std_logic;
+signal lights_L : std_logic_vector(2 downto 0);
+signal lights_R : std_logic_vector(2 downto 0);
+    
 begin
+clk_div :clock_divider
+generic map(
+    K_DIV => 25000000
+)
 	-- PORT MAPS ----------------------------------------
-
+port map(
+    i_clk   => clk,
+    i_reset => btnL,
+    o_clk   => slow_clk
+);
+fsm : thunderbird_fsm
+port map(
+    i_clk        => slow_clk,
+    i_reset      => btnR,
+    i_left       => sw(15),
+    i_right      => sw(0),
+    o_lights_L   => lights_L,
+    o_lights_R   => lighTS_R
+);
+    led(15 downto 13) <= lights_L; 
+    led(2 downto 0) <= lights_R; 
+    --unused
 	
-	
-	-- CONCURRENT STATEMENTS ----------------------------
-	
-	-- ground unused LEDs
 	-- leave unused switches UNCONNECTED
 	
 	-- Ignore the warnings associated with these signals
