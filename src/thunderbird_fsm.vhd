@@ -198,6 +198,9 @@ case state is
     when "00001000" =>  --r3
         o_lights_L <= "000";
         o_lights_R <= "111";
+    when others =>
+       o_lights_L <= "000";
+       o_lights_R <= "000";   
  end case;
  end process;
       
