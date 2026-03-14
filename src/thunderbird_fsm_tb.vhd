@@ -114,7 +114,7 @@ begin
 	   wait for clk_period*2;
 	   i_reset_tb <= '0';
 	   wait for clk_period*2;
-	   assert (o-lights_L_tb ="000" and o_lights_R_tb = "000")
+	   assert (o_lights_L_tb ="000" and o_lights_R_tb = "000")
 	        report "RESET failed" severity error;
 
         -- TEST 2
